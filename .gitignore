@@ -87,3 +87,16 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Project-specific
+resources/
+MOT15/
+MOT16/
+*.npy
+*.pth
+*.pt
+*.mp4
+results/overlays/
+results/tuning/
+.cache/
+
