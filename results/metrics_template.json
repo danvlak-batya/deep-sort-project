@@ -1,0 +1,16 @@
+{
+  "note": "Placeholder metrics — run eval scripts on MOT data to populate",
+  "baseline_hota": {
+    "per_sequence": {},
+    "mean_hota": 0.0
+  },
+  "best_hota": {
+    "detector": "yolov8n",
+    "reid": "osnet_x0_25",
+    "per_sequence": {},
+    "mean_hota": 0.0,
+    "fps": 0.0
+  },
+  "detector_f1": {},
+  "reid_metrics": {}
+}
