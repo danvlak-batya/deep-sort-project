@@ -1,0 +1,3 @@
+min_confidence: 0.3
+max_cosine_distance: 0.22
+nms_max_overlap: 0.65

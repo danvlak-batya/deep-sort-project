@@ -1,0 +1,12 @@
+detector: yolov8n
+reid: osnet_x0_25
+detector_conf: 0.25
+imgsz: 640
+min_confidence: 0.3
+nms_max_overlap: 0.7
+min_detection_height: 0
+max_cosine_distance: 0.2
+nn_budget: 100
+max_iou_distance: 0.7
+max_age: 30
+n_init: 3

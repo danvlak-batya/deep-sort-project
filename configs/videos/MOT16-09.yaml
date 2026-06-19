@@ -1,0 +1,4 @@
+# Per-video overrides for crowded scenes
+min_confidence: 0.35
+max_cosine_distance: 0.25
+nms_max_overlap: 0.6

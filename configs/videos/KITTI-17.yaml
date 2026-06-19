@@ -1,0 +1,3 @@
+min_confidence: 0.25
+max_cosine_distance: 0.15
+detector_conf: 0.2
