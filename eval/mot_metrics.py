@@ -123,6 +123,7 @@ def evaluate_hota(mot_root, results_dir, sequences=None, tracker_name="deep_sort
         eval_config["PRINT_ONLY_COMBINED"] = False
         eval_config["DISPLAY_LESS_PROGRESS"] = True
         eval_config["BREAK_ON_ERROR"] = True
+        eval_config["PLOT_CURVES"] = False  # avoid matplotlib save errors on Colab
 
         dataset_config = trackeval.datasets.MotChallenge2DBox.get_default_dataset_config()
         dataset_config["GT_FOLDER"] = gt_root
