@@ -14,6 +14,7 @@ from deep_sort.tracker import Tracker
 from detectors import create_detector
 from pipeline.config import load_config
 from reid import create_reid
+from utils.mot_paths import is_sequence_dir
 
 import deep_sort_app
 
@@ -133,7 +134,7 @@ def run_mot_directory(mot_dir, config, output_dir, config_path=None):
     all_stats = []
     for sequence in sorted(os.listdir(mot_dir)):
         seq_path = os.path.join(mot_dir, sequence)
-        if not os.path.isdir(seq_path) or not os.path.isdir(os.path.join(seq_path, "img1")):
+        if not os.path.isdir(seq_path) or not is_sequence_dir(seq_path):
             continue
         print("Running sequence: %s" % sequence)
         cfg = load_config(config_path, video_name=sequence)

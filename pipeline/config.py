@@ -3,6 +3,8 @@ import os
 
 import yaml
 
+from utils.mot_paths import SEQUENCE_ALIASES
+
 DEFAULT_CONFIG = {
     "detector": "yolov8n",
     "reid": "osnet_x0_25",
@@ -38,10 +40,17 @@ def load_config(config_path=None, video_name=None):
             config = deep_merge(config, yaml.safe_load(f) or {})
 
     if video_name:
-        video_cfg_path = os.path.join(
-            os.path.dirname(config_path or "configs/default.yaml"),
-            "videos", "%s.yaml" % video_name)
-        if os.path.exists(video_cfg_path):
-            with open(video_cfg_path, "r", encoding="utf-8") as f:
-                config = deep_merge(config, yaml.safe_load(f) or {})
+        videos_dir = os.path.join(
+            os.path.dirname(config_path or "configs/default.yaml"), "videos")
+        names_to_try = [video_name]
+        for canonical, aliases in SEQUENCE_ALIASES.items():
+            if video_name in aliases or video_name == canonical:
+                names_to_try = [canonical] + list(aliases)
+                break
+        for name in names_to_try:
+            video_cfg_path = os.path.join(videos_dir, "%s.yaml" % name)
+            if os.path.exists(video_cfg_path):
+                with open(video_cfg_path, "r", encoding="utf-8") as f:
+                    config = deep_merge(config, yaml.safe_load(f) or {})
+                break
     return config

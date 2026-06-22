@@ -11,16 +11,17 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from eval.mot_metrics import _find_sequence_path
+from utils.mot_paths import list_image_filenames
 
 
 def generate_overlay(sequence_path, result_file, output_video, fps=25):
-    img_dir = os.path.join(sequence_path, "img1")
+    image_filenames = list_image_filenames(sequence_path)
     results = np.loadtxt(result_file, delimiter=",")
     if results.ndim == 1:
         results = results.reshape(1, -1)
 
-    frames = sorted(int(os.path.splitext(f)[0]) for f in os.listdir(img_dir))
-    first = cv2.imread(os.path.join(img_dir, os.listdir(img_dir)[0]))
+    frames = sorted(image_filenames.keys())
+    first = cv2.imread(next(iter(image_filenames.values())))
     h, w = first.shape[:2]
     writer = cv2.VideoWriter(
         output_video,
@@ -32,15 +33,12 @@ def generate_overlay(sequence_path, result_file, output_video, fps=25):
     colors = {}
 
     for frame_idx in frames:
-        img_name = None
-        for ext in (".jpg", ".png"):
-            candidate = os.path.join(img_dir, "%06d%s" % (frame_idx, ext))
-            if os.path.exists(candidate):
-                img_name = candidate
-                break
-        if img_name is None:
+        image_path = image_filenames.get(frame_idx)
+        if image_path is None:
             continue
-        image = cv2.imread(img_name)
+        image = cv2.imread(image_path)
+        if image is None:
+            continue
         mask = results[:, 0].astype(int) == frame_idx
         rows = results[mask]
         for row in rows:

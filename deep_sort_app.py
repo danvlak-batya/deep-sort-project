@@ -12,6 +12,7 @@ from application_util import visualization
 from deep_sort import nn_matching
 from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
+from utils.mot_paths import get_gt_file, list_image_filenames
 
 
 def gather_sequence_info(sequence_dir, detection_file):
@@ -40,11 +41,8 @@ def gather_sequence_info(sequence_dir, detection_file):
         * max_frame_idx: Index of the last frame.
 
     """
-    image_dir = os.path.join(sequence_dir, "img1")
-    image_filenames = {
-        int(os.path.splitext(f)[0]): os.path.join(image_dir, f)
-        for f in os.listdir(image_dir)}
-    groundtruth_file = os.path.join(sequence_dir, "gt/gt.txt")
+    image_filenames = list_image_filenames(sequence_dir)
+    groundtruth_file = get_gt_file(sequence_dir)
 
     detections = None
     if detection_file is not None:

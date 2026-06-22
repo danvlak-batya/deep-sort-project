@@ -14,11 +14,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from eval.mot_metrics import EVAL_SEQUENCES, _find_sequence_path
 from reid import create_reid, list_reid_models
+from utils.mot_paths import get_gt_file, list_image_filenames
 
 
 def load_gt_crops(sequence_path, max_frames=None):
-    img_dir = os.path.join(sequence_path, "img1")
-    gt_path = os.path.join(sequence_path, "gt", "gt.txt")
+    image_filenames = list_image_filenames(sequence_path)
+    gt_path = get_gt_file(sequence_path)
     gt = np.loadtxt(gt_path, delimiter=",")
     if gt.ndim == 1:
         gt = gt.reshape(1, -1)
@@ -29,10 +30,11 @@ def load_gt_crops(sequence_path, max_frames=None):
 
     crops_meta = []
     for frame_idx in frames:
-        image_path = os.path.join(img_dir, "%06d.jpg" % frame_idx)
-        image = cv2.imread(image_path)
+        if frame_idx not in image_filenames:
+            continue
+        image = cv2.imread(image_filenames[frame_idx])
         if image is None:
-            image = cv2.imread(os.path.join(img_dir, "%06d.png" % frame_idx))
+            continue
         mask = gt[:, 0].astype(int) == frame_idx
         for row in gt[mask]:
             if len(row) > 7 and int(row[7]) not in (1, 2, 7):

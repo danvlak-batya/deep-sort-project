@@ -8,7 +8,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from eval.mot_metrics import EVAL_SEQUENCES, _find_sequence_path
+from eval.mot_metrics import EVAL_SEQUENCES
+from utils.mot_paths import find_sequence_dir
 from pipeline.config import load_config
 from pipeline.run_tracker import run_sequence
 
@@ -29,7 +30,7 @@ def main():
     all_stats = []
     for seq in EVAL_SEQUENCES:
         try:
-            seq_path = _find_sequence_path(args.mot_root, seq)
+            seq_path = find_sequence_dir(args.mot_root, seq)
         except FileNotFoundError:
             print("Skip %s: not found" % seq)
             continue

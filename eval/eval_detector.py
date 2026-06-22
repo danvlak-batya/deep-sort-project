@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from detectors import create_detector, list_detectors
 from eval.mot_metrics import EVAL_SEQUENCES, _find_sequence_path
+from utils.mot_paths import get_gt_file, list_image_filenames
 from utils.image import iou_matrix
 
 
@@ -57,14 +58,14 @@ def match_detections(pred_boxes, gt_boxes, iou_thresh=IOU_THRESHOLD):
 
 
 def evaluate_detector_on_sequence(detector, sequence_path):
-    img_dir = os.path.join(sequence_path, "img1")
-    gt_path = os.path.join(sequence_path, "gt", "gt.txt")
-    frames = sorted(int(os.path.splitext(f)[0]) for f in os.listdir(img_dir))
+    image_filenames = list_image_filenames(sequence_path)
+    gt_path = get_gt_file(sequence_path)
+    frames = sorted(image_filenames.keys())
     tp = fp = fn = 0
     for frame_idx in frames:
-        image = cv2.imread(os.path.join(img_dir, "%06d.jpg" % frame_idx))
+        image = cv2.imread(image_filenames[frame_idx])
         if image is None:
-            image = cv2.imread(os.path.join(img_dir, "%06d.png" % frame_idx))
+            continue
         dets = detector.detect(image)
         pred_boxes = [d[0] for d in dets]
         gt_boxes = load_gt_boxes(gt_path, frame_idx)

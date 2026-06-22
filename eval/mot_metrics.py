@@ -5,6 +5,8 @@ import os
 import shutil
 import tempfile
 
+from utils.mot_paths import find_sequence_dir, get_gt_file
+
 
 EVAL_SEQUENCES = [
     "TUD-Campus",
@@ -17,21 +19,7 @@ EVAL_SEQUENCES = [
 
 
 def _find_sequence_path(mot_root, sequence_name):
-    search_roots = [mot_root]
-    for sub in ("MOT15", "MOT16"):
-        candidate_root = os.path.join(mot_root, sub)
-        if os.path.isdir(candidate_root):
-            search_roots.append(candidate_root)
-
-    for root in search_roots:
-        for split in ("train", "test", ""):
-            if split:
-                candidate = os.path.join(root, split, sequence_name)
-            else:
-                candidate = os.path.join(root, sequence_name)
-            if os.path.isdir(candidate):
-                return candidate
-    raise FileNotFoundError("Sequence %s not found under %s" % (sequence_name, mot_root))
+    return find_sequence_dir(mot_root, sequence_name)
 
 
 def _prepare_trackeval_folders(mot_root, results_dir, sequences, tracker_name="deep_sort"):
@@ -46,7 +34,7 @@ def _prepare_trackeval_folders(mot_root, results_dir, sequences, tracker_name="d
         seq_path = _find_sequence_path(mot_root, seq)
         gt_seq_dir = os.path.join(gt_root, seq, "gt")
         os.makedirs(gt_seq_dir, exist_ok=True)
-        gt_src = os.path.join(seq_path, "gt", "gt.txt")
+        gt_src = get_gt_file(seq_path)
         if os.path.exists(gt_src):
             shutil.copy(gt_src, os.path.join(gt_seq_dir, "gt.txt"))
 
