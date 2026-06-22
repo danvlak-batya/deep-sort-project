@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torchreid
+from PIL import Image
 
 from reid.base import BaseReID
 from utils.image import extract_image_patch
@@ -42,6 +43,7 @@ class TorchReIDEncoder(BaseReID):
             if patch is None:
                 continue
             patch = patch[:, :, ::-1]  # BGR -> RGB
+            patch = Image.fromarray(patch.astype(np.uint8))
             patches.append(self.transform(patch))
             valid_idx.append(i)
         return patches, valid_idx
