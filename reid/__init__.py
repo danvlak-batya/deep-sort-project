@@ -1,11 +1,10 @@
 from reid.base import BaseReID
-from reid.torchreid_backend import TorchReIDEncoder
-from reid.fastreid_backend import FastReIDEncoder
+from reid.timm_backend import TimmReIDEncoder
 
 REID_REGISTRY = {
-    "osnet_x0_25": lambda **kw: TorchReIDEncoder(model_name="osnet_x0_25", **kw),
-    "resnet50_ibn": lambda **kw: TorchReIDEncoder(model_name="resnet50_ibn_a", **kw),
-    "fastreid_sbs": lambda **kw: FastReIDEncoder(**kw),
+    "osnet_x0_25": lambda **kw: TimmReIDEncoder(model_name="osnet_x0_25", **kw),
+    "resnet50_ibn": lambda **kw: TimmReIDEncoder(model_name="resnet50_ibn", **kw),
+    "fastreid_sbs": lambda **kw: TimmReIDEncoder(model_name="fastreid_sbs", **kw),
 }
 
 

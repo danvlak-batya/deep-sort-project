@@ -31,9 +31,9 @@ Recommended combo: **YOLOv8n + osnet_x0_25**
 
 | Detectors | ReID |
 |-----------|------|
-| yolov8n (Ultralytics) | osnet_x0_25 (torchreid) |
-| yolov5s (torch.hub) | resnet50_ibn (torchreid) |
-| rtdetr_r18 (HuggingFace) | fastreid_sbs (fallback in Colab) |
+| yolov8n (Ultralytics) | osnet_x0_25 (timm) |
+| yolov5s (torch.hub) | resnet50_ibn (timm) |
+| rtdetr_r18 (HuggingFace) | fastreid_sbs / osnet_x1_0 (timm) |
 
 ## Evaluation commands (Colab)
 

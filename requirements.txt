@@ -1,4 +1,3 @@
-# Colab-friendly dependencies (torch is preinstalled in Colab)
 numpy>=1.22,<2.1
 opencv-python
 scipy
@@ -8,8 +7,8 @@ scikit-learn
 Pillow
 tqdm
 ultralytics
+timm
 transformers
-trackeval
 
-# torchreid: install separately in Colab (PyPI package fails on Python 3.12):
-#   pip install git+https://github.com/KaiyangZhou/deep-person-reid.git
+# trackeval — install only when running HOTA eval (cell 7 in Colab):
+#   pip install trackeval
