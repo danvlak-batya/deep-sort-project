@@ -1,0 +1,15 @@
+numpy
+opencv-python
+scipy
+filterpy
+PyYAML
+scikit-learn
+ultralytics
+torch>=2.0
+torchvision
+transformers
+Pillow
+torchreid
+git+https://github.com/JDAI-CV/fast-reid.git
+trackeval
+tqdm
