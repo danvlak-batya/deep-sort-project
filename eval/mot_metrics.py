@@ -22,27 +22,51 @@ def _find_sequence_path(mot_root, sequence_name):
     return find_sequence_dir(mot_root, sequence_name)
 
 
+MOT15_SEQUENCES = {"TUD-Campus", "TUD-Stadtmitte", "KITTI-17", "PETS09-S2L1"}
+MOT16_SEQUENCES = {"MOT16-09", "MOT16-11"}
+
+# TrackEval expects: GT_FOLDER / BENCHMARK / SPLIT / SEQ / gt / gt.txt
+TRACKEVAL_BENCHMARK = "MOT"
+TRACKEVAL_SPLIT = "train"
+
+
 def _prepare_trackeval_folders(mot_root, results_dir, sequences, tracker_name="deep_sort"):
-    """Build folder layout expected by TrackEval."""
+    """Build folder layout expected by TrackEval MotChallenge2DBox."""
     tmp = tempfile.mkdtemp(prefix="trackeval_")
     gt_root = os.path.join(tmp, "gt")
     trackers_root = os.path.join(tmp, "trackers")
     tracker_dir = os.path.join(trackers_root, tracker_name, "data")
     os.makedirs(tracker_dir, exist_ok=True)
 
+    prepared = []
     for seq in sequences:
-        seq_path = _find_sequence_path(mot_root, seq)
-        gt_seq_dir = os.path.join(gt_root, seq, "gt")
-        os.makedirs(gt_seq_dir, exist_ok=True)
-        gt_src = get_gt_file(seq_path)
-        if os.path.exists(gt_src):
-            shutil.copy(gt_src, os.path.join(gt_seq_dir, "gt.txt"))
-
         result_file = os.path.join(results_dir, "%s.txt" % seq)
-        if os.path.exists(result_file):
-            shutil.copy(result_file, os.path.join(tracker_dir, "%s.txt" % seq))
+        if not os.path.exists(result_file):
+            print("Skip %s: no tracker results at %s" % (seq, result_file))
+            continue
+        try:
+            seq_path = _find_sequence_path(mot_root, seq)
+        except FileNotFoundError:
+            print("Skip %s: sequence folder not found" % seq)
+            continue
 
-    return tmp, gt_root, trackers_root
+        gt_src = get_gt_file(seq_path)
+        if not os.path.exists(gt_src):
+            print("Skip %s: GT not found at %s" % (seq, gt_src))
+            continue
+
+        gt_seq_dir = os.path.join(
+            gt_root, TRACKEVAL_BENCHMARK, TRACKEVAL_SPLIT, seq, "gt")
+        os.makedirs(gt_seq_dir, exist_ok=True)
+        shutil.copy(gt_src, os.path.join(gt_seq_dir, "gt.txt"))
+        shutil.copy(result_file, os.path.join(tracker_dir, "%s.txt" % seq))
+        prepared.append(seq)
+
+    if not prepared:
+        raise FileNotFoundError(
+            "No sequences ready for HOTA. Check results_dir (.txt files) and GT folders.")
+
+    return tmp, gt_root, trackers_root, prepared
 
 
 def evaluate_hota(mot_root, results_dir, sequences=None, tracker_name="deep_sort"):
@@ -55,7 +79,7 @@ def evaluate_hota(mot_root, results_dir, sequences=None, tracker_name="deep_sort
         Per-sequence and mean HOTA scores.
     """
     sequences = sequences or EVAL_SEQUENCES
-    tmp, gt_root, trackers_root = _prepare_trackeval_folders(
+    tmp, gt_root, trackers_root, prepared = _prepare_trackeval_folders(
         mot_root, results_dir, sequences, tracker_name)
 
     try:
@@ -70,12 +94,11 @@ def evaluate_hota(mot_root, results_dir, sequences=None, tracker_name="deep_sort
         dataset_config["GT_FOLDER"] = gt_root
         dataset_config["TRACKERS_FOLDER"] = trackers_root
         dataset_config["TRACKERS_TO_EVAL"] = [tracker_name]
-        dataset_config["BENCHMARK"] = ""
-        dataset_config["SPLIT_TO_EVAL"] = ""
-        dataset_config["SEQ_INFO"] = {
-            seq: {"seq_length": -1} for seq in sequences if os.path.exists(
-                os.path.join(trackers_root, tracker_name, "data", "%s.txt" % seq))}
+        dataset_config["BENCHMARK"] = TRACKEVAL_BENCHMARK
+        dataset_config["SPLIT_TO_EVAL"] = TRACKEVAL_SPLIT
+        dataset_config["SEQ_INFO"] = {seq: {"seq_length": -1} for seq in prepared}
         dataset_config["CLASSES_TO_EVAL"] = ["pedestrian"]
+        dataset_config["SKIP_SPLIT_FOL"] = True
 
         metrics_config = {"METRICS": ["HOTA", "CLEAR", "Identity"]}
         evaluator = trackeval.Evaluator(eval_config)
@@ -86,7 +109,7 @@ def evaluate_hota(mot_root, results_dir, sequences=None, tracker_name="deep_sort
         output = {"per_sequence": {}, "mean_hota": 0.0}
         hota_vals = []
         tracker_res = results[dataset.name][tracker_name]
-        for seq in sequences:
+        for seq in prepared:
             if seq not in tracker_res:
                 continue
             hota = float(tracker_res[seq]["HOTA"]["HOTA"])
