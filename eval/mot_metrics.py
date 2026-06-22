@@ -22,6 +22,28 @@ def _find_sequence_path(mot_root, sequence_name):
     return find_sequence_dir(mot_root, sequence_name)
 
 
+def _sanitize_gt_line(line):
+    """Fix GT rows for TrackEval (class -1 -> 1 for pedestrian)."""
+    parts = line.strip().split(",")
+    if len(parts) >= 8:
+        try:
+            if int(float(parts[7])) == -1:
+                parts[7] = "1"
+        except ValueError:
+            pass
+    return ",".join(parts) + "\n"
+
+
+def _copy_gt_for_trackeval(gt_src, gt_dst):
+    """Copy GT file, normalizing class labels for TrackEval."""
+    with open(gt_src, "r", encoding="utf-8") as fin:
+        lines = fin.readlines()
+    with open(gt_dst, "w", encoding="utf-8") as fout:
+        for line in lines:
+            if line.strip():
+                fout.write(_sanitize_gt_line(line))
+
+
 def _prepare_trackeval_folders(mot_root, results_dir, sequences, tracker_name="deep_sort"):
     """Build folder layout for TrackEval with SKIP_SPLIT_FOL=True.
 
@@ -56,7 +78,7 @@ def _prepare_trackeval_folders(mot_root, results_dir, sequences, tracker_name="d
         gt_seq_dir = os.path.join(gt_root, seq, "gt")
         os.makedirs(gt_seq_dir, exist_ok=True)
         gt_dst = os.path.join(gt_seq_dir, "gt.txt")
-        shutil.copy(gt_src, gt_dst)
+        _copy_gt_for_trackeval(gt_src, gt_dst)
         shutil.copy(result_file, os.path.join(tracker_dir, "%s.txt" % seq))
 
         num_frames = len(list_image_filenames(seq_path))
@@ -111,7 +133,8 @@ def evaluate_hota(mot_root, results_dir, sequences=None, tracker_name="deep_sort
         dataset_config["SEQ_INFO"] = seq_info
         dataset_config["CLASSES_TO_EVAL"] = ["pedestrian"]
         dataset_config["SKIP_SPLIT_FOL"] = True
-        dataset_config["DO_PREPROC"] = True
+        # MOT15 / custom GT often has class -1; preprocessing expects MOT16 class IDs.
+        dataset_config["DO_PREPROC"] = False
 
         print("TrackEval GT_FOLDER:", gt_root)
         print("SEQ_INFO:", seq_info)
