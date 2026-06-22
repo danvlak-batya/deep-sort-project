@@ -1,119 +1,61 @@
 # Deep SORT — Extended Final Project
 
-Extended implementation of [Deep SORT](https://github.com/nwojke/deep_sort) with modern person detectors and ReID models for MOT Challenge evaluation.
+Extended [Deep SORT](https://github.com/nwojke/deep_sort) for HSE Deep Learning course.
 
-## Features
+## Deliverables
 
-- **3 detectors**: YOLOv8n (Ultralytics), YOLOv5s (torch.hub), RT-DETR-R18 (HuggingFace)
-- **3 ReID models**: OSNet x0.25, ResNet50-IBN (torchreid), fast-reid SBS
-- Unified tracking pipeline with per-video YAML configs
-- HOTA evaluation via [TrackEval](https://github.com/JonathonLuiten/TrackEval)
-- Detector F1 and ReID clustering metrics
-- Overlay video generation
-- Google Colab notebook for reproducible runs
+- 3 detectors + 3 ReID models (selectable)
+- HOTA evaluation on 6 MOT sequences
+- Colab notebook: [`notebooks/DeepSORT_Colab.ipynb`](notebooks/DeepSORT_Colab.ipynb)
+- Report: [`report/report.md`](report/report.md)
+- Overlays: baseline + best
 
-## Evaluation sequences
+## Data layout (Google Drive)
 
-- TUD-Campus, TUD-Stadtmitte, KITTI-17, PETS09-S2L1 (MOT15)
-- MOT16-09, MOT16-11 (MOT16)
-
-## Quick start (Google Colab)
-
-See [`notebooks/DeepSORT_Colab.ipynb`](notebooks/DeepSORT_Colab.ipynb) for full instructions.
-
-```python
-!git clone https://github.com/<your-user>/deep-sort-project.git
-%cd deep-sort-project
-!pip install -q -r requirements.txt
+```
+MyDrive/Videos-CV/
+  Kitti-17/img/   gt/   det/
+  MOT16-09/img/   gt/   det/
+  ...
 ```
 
-Mount MOT data on Google Drive under `MyDrive/MOT/` with standard MOTChallenge layout.
+## Colab quick start
 
-## Run modern tracker
+1. Open `notebooks/DeepSORT_Colab.ipynb` in Colab (GPU runtime)
+2. Cell 2 runs `python tools/install_colab_deps.py` (do **not** use plain `pip install -r requirements.txt` — torchreid fails on Colab Python 3.12)
+3. Run cells 1–6 in order
+
+Recommended combo: **YOLOv8n + osnet_x0_25**
+
+## Models
+
+| Detectors | ReID |
+|-----------|------|
+| yolov8n (Ultralytics) | osnet_x0_25 (torchreid) |
+| yolov5s (torch.hub) | resnet50_ibn (torchreid) |
+| rtdetr_r18 (HuggingFace) | fastreid_sbs (fallback in Colab) |
+
+## Evaluation commands (Colab)
 
 ```bash
-# Single sequence
-python run_tracker.py \
-  --sequence_dir /path/to/MOT16/train/MOT16-09 \
-  --config configs/default.yaml \
-  --detector yolov8n \
-  --reid osnet_x0_25 \
-  --output_file results/modern/MOT16-09.txt
-
-# All sequences in a directory
-python run_tracker.py \
-  --mot_dir /path/to/MOT16/train \
-  --output_dir results/modern
+python eval/run_benchmark.py --mot_root $DATA_ROOT --output_dir results/modern
+python eval/run_mot.py --mot_dir $DATA_ROOT --output_dir results/modern --skip_tracking
+python eval/eval_detector.py --mot_dir $DATA_ROOT --detector yolov8n
+python eval/eval_reid.py --mot_dir $DATA_ROOT --reid osnet_x0_25
+python tools/generate_overlays.py --mot_dir $DATA_ROOT --results_dir results/modern --output_dir results/overlays
 ```
 
-## Baseline (original DeepSORT)
+## Baseline
 
-The original tracker entry point is preserved:
+Download pre-generated detections from [original DeepSORT release](https://drive.google.com/open?id=18fKzfqnqhqW3s9zwsCbnVJ5XF2JFeqMp), then:
 
 ```bash
-python deep_sort_app.py \
-  --sequence_dir ./MOT16/train/MOT16-09 \
-  --detection_file ./resources/detections/MOT16-09.npy \
-  --min_confidence=0.3 \
-  --display=False
+python eval/run_baseline.py --mot_root $DATA_ROOT --detections_dir resources/detections/
 ```
 
-Pre-generated detections and the TensorFlow ReID model are available from the [original release](https://drive.google.com/open?id=18fKzfqnqhqW3s9zwsCbnVJ5XF2JFeqMp).
-
-## Evaluation
-
-```bash
-# Full pipeline + HOTA
-python eval/run_mot.py --mot_dir /path/to/MOT --output_dir results/modern
-
-# Detector F1 vs ground truth
-python eval/eval_detector.py --mot_dir /path/to/MOT --detector yolov8n
-
-# ReID quality with GT boxes
-python eval/eval_reid.py --mot_dir /path/to/MOT --reid osnet_x0_25
-
-# Parameter grid search (subset of videos)
-python eval/tune_params.py --mot_dir /path/to/MOT
-
-# Generate overlay videos
-python tools/generate_overlays.py \
-  --mot_dir /path/to/MOT \
-  --results_dir results/modern \
-  --output_dir results/overlays
-```
-
-## Configuration
-
-Default settings: [`configs/default.yaml`](configs/default.yaml)
-
-Per-video overrides: [`configs/videos/`](configs/videos/)
-
-Recommended real-time combo (≥5 FPS on Colab T4): **YOLOv8n + osnet_x0_25**.
-
-## Project structure
+## Structure
 
 ```
-detectors/          # YOLOv8, YOLOv5, RT-DETR backends
-reid/               # torchreid and fast-reid backends
-pipeline/           # Unified tracker + config loader
-eval/               # HOTA, detector F1, ReID metrics, tuning
-configs/            # Default and per-video parameters
-tools/              # Overlay generation (+ original scripts)
-notebooks/          # Colab notebook
-report/             # Project report
-deep_sort/          # Original DeepSORT core (unchanged)
-```
-
-## Report
-
-See [`report/report.md`](report/report.md) for methodology, parameter evolution, and results tables.
-
-## Citing DeepSORT
-
-```bibtex
-@inproceedings{Wojke2017simple,
-  title={Simple Online and Realtime Tracking with a Deep Association Metric},
-  author={Wojke, Nicolai and Bewley, Alex and Paulus, Dietrich},
-  booktitle={ICIP}, year={2017}
-}
+detectors/  reid/  pipeline/  eval/  configs/  tools/  notebooks/  report/
+deep_sort/  deep_sort_app.py  run_tracker.py   # original + entry points
 ```
