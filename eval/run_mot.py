@@ -35,12 +35,17 @@ def main():
     if args.reid:
         overrides["reid"] = args.reid
 
-    if not args.skip_tracking:
-        run_mot_directory(args.mot_dir, overrides, args.output_dir, config_path=args.config)
+    try:
+        if not args.skip_tracking:
+            run_mot_directory(args.mot_dir, overrides, args.output_dir, config_path=args.config)
 
-    metrics = evaluate_hota(args.mot_dir, args.output_dir, sequences=args.sequences)
-    save_metrics_json(metrics, args.metrics_out)
-    print(json.dumps(metrics, indent=2))
+        metrics = evaluate_hota(args.mot_dir, args.output_dir, sequences=args.sequences)
+        save_metrics_json(metrics, args.metrics_out)
+        print(json.dumps(metrics, indent=2))
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        raise SystemExit(1) from exc
 
 
 if __name__ == "__main__":
