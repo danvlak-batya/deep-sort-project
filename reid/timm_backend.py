@@ -8,26 +8,53 @@ from PIL import Image
 from reid.base import BaseReID
 from utils.image import extract_image_patch
 
-# Registry key -> timm model name
-TIMM_MODELS = {
-    "osnet_x0_25": "osnet_x0_25",
-    "resnet50_ibn": "resnet50_ibn_a",
-    "fastreid_sbs": "osnet_x1_0",
-}
+def _first_timm_model(patterns, fallbacks=None):
+    """Find first available pretrained timm model by glob patterns."""
+    for pattern in patterns:
+        matches = timm.list_models(pattern, pretrained=True)
+        if matches:
+            return matches[0]
+    for name in (fallbacks or []):
+        matches = timm.list_models(name, pretrained=True)
+        if matches:
+            return matches[0]
+        if not name.endswith("*"):
+            matches = timm.list_models(name + "*", pretrained=True)
+            if matches:
+                return matches[0]
+    return None
 
 
 def _resolve_timm_name(model_key):
-    candidates = {
-        "osnet_x0_25": ["osnet_x0_25", "osnet_x0_5"],
-        "resnet50_ibn": ["resnet50_ibn_a", "resnet50"],
-        "fastreid_sbs": ["osnet_x1_0", "osnet_x0_75"],
-    }.get(model_key, [model_key])
+    """Map registry keys to an available timm model (OSNet may be absent in some timm versions)."""
+    search = {
+        "osnet_x0_25": (
+            ["osnet_x0_25*", "osnet_x0_5*", "osnet*"],
+            ["mobilenetv3_small_100*", "resnet18*"],
+        ),
+        "resnet50_ibn": (
+            ["resnet50_ibn*", "resnet50*"],
+            ["resnet34*"],
+        ),
+        "fastreid_sbs": (
+            ["osnet_x1_0*", "osnet_x0_75*", "resnet101*"],
+            ["efficientnet_b0*", "resnet50*"],
+        ),
+    }
 
-    all_models = set(timm.list_models())
-    for name in candidates:
-        if name in all_models:
+    if model_key in search:
+        patterns, fallbacks = search[model_key]
+        name = _first_timm_model(patterns, fallbacks)
+        if name:
+            if name not in patterns[0].replace("*", ""):
+                print("ReID %s -> using timm model: %s" % (model_key, name))
             return name
-    raise ValueError("No timm model found for %s (tried %s)" % (model_key, candidates))
+
+    name = _first_timm_model([model_key, model_key + "*"], ["resnet18*"])
+    if name:
+        return name
+    raise ValueError(
+        "No timm model found for %s. Try: pip install -U timm" % model_key)
 
 
 class TimmReIDEncoder(BaseReID):
