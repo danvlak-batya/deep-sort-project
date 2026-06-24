@@ -90,13 +90,14 @@ ENV/
 
 # Project-specific
 resources/
-MOT15/
-MOT16/
+venv/
+data/
+scripts/
+report/
+results/
 *.npy
 *.pth
 *.pt
 *.mp4
-results/overlays/
-results/tuning/
 .cache/
 

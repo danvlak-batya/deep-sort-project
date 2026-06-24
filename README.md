@@ -19,14 +19,6 @@ MyDrive/Videos-CV/
   ...
 ```
 
-## Colab quick start
-
-1. Open `notebooks/DeepSORT_Colab.ipynb` in Colab (GPU runtime)
-2. Cell 2 runs `python tools/install_colab_deps.py` (do **not** use plain `pip install -r requirements.txt` — torchreid fails on Colab Python 3.12)
-3. Run cells 1–6 in order
-
-Recommended combo: **YOLOv8n + osnet_x0_25**
-
 ## Models
 
 | Detectors | ReID |
@@ -47,15 +39,20 @@ python tools/generate_overlays.py --mot_dir $DATA_ROOT --results_dir results/mod
 
 ## Baseline
 
-Download pre-generated detections from [original DeepSORT release](https://drive.google.com/open?id=18fKzfqnqhqW3s9zwsCbnVJ5XF2JFeqMp), then:
+From course `det/` files (no prebuilt `.npy` required):
 
 ```bash
-python eval/run_baseline.py --mot_root $DATA_ROOT --detections_dir resources/detections/
+python eval/run_baseline_from_det.py \
+  --mot_root $DATA_ROOT \
+  --model resources/networks/mars-small128.pb \
+  --output_dir results/baseline
 ```
+
+Download `mars-small128.pb` from [original DeepSORT release](https://drive.google.com/open?id=18fKzfqnqhqW3s9zwsCbnVJ5XF2JFeqMp).
 
 ## Structure
 
 ```
-detectors/  reid/  pipeline/  eval/  configs/  tools/  notebooks/  report/
+detectors/  reid/  pipeline/  eval/  configs/  tools/  notebooks/
 deep_sort/  deep_sort_app.py  run_tracker.py   # original + entry points
 ```
